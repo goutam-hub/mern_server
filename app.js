@@ -1,18 +1,19 @@
+const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const express = require('express');
 const app = express();
 
-//DB connection
-const DB = 'mongodb+srv://goutams:hasstag@cluster0.rchwk.mongodb.net/mernstack?retryWrites=true&w=majority'
+dotenv.config({path:'./config.env'});
+// DB connection here
+require('./db/conn.js');
+app.use(express.json());
+//Router linked here
+app.use(require('./router/auth'));
 
-mongoose.connect(DB, {
-    useNewUrlParser:true,
-    useCreateIndex:true,
-    useUnifiedTopology:true,
-    useFindAndModify:false
-}).then(() => {
-    console.log(`Connection Successful`);
-}).catch((err) => console.log(`not connected`,err));
+
+
+const PORT  = process.env.PORT;
+
 
 //Middleware
 
@@ -22,9 +23,9 @@ const middleware = (req,res,next) => {
     next();//this will run your next action - redirect to path
 }
 
-app.get('/', (req, res) => {
-    res.send(`Hello world from the server`);
-})
+// app.get('/', (req, res) => {
+//     res.send(`Hello world from the server`);
+// })
 app.get('/about', middleware, (req, res) => {
     res.send(`What About from the server`);
 })
@@ -39,5 +40,5 @@ app.get('/login', (req, res) => {
 })
 
 app.listen(3000, () => {
-    console.log(`Server is running on 3000`)
+    console.log(`Server is running on ${PORT}`)
 })
