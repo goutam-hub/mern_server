@@ -2,9 +2,13 @@ const express=require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 require('../db/conn');
+
+router.use(cookieParser());
 const User = require('../model/userSchema');
+const Authenticate = require('../middleware/Authenticate');
 
 
 router.get('/', (req, res) => {
@@ -59,8 +63,9 @@ router.post('/register', async (req, res) => {
     }
 })
 
-router.post('/login', async (req, res) => {
+router.post('/signin', async (req, res) => {
     try{
+        let token;
         const {email, password} = req.body;
         if(!email || !password){
             return res.status(422).json({errpr : 'Please fill the data'});
@@ -70,14 +75,21 @@ router.post('/login', async (req, res) => {
 
         if(user){
             const isMatch = await bcrypt.compare(password, user.password);
+            
+            token = await user.generateAuthToken();
+            console.log(token);
+
+            res.cookie("jwtoken", token , {
+                expires:new Date(Date.now() + 25892000000),
+                httpOnly:false
+            })
 
             if(!isMatch){
                 res.status(400).json({error:'User error'});
             }else{
                 res.json({message:'User Logged in successfully'});
                 console.log(user);
-                const token = await user.generateAuthToken();
-                console.log(token);
+                
             }
         }else{
             res.json({error:'User error'});
@@ -88,6 +100,12 @@ router.post('/login', async (req, res) => {
     }catch(err){
         console.log(err);
     }
+})
+
+
+router.get('/aboutback', Authenticate, (req, res) => {
+    console.log('Cookies: ', req.cookies)
+    res.send(req.rootUser);
 })
 
 module.exports = router;
